@@ -32,22 +32,18 @@ if __name__ == '__main__':
         try:
             print(f"connection from {client_address}\n")
             filename = connection.recv(CHUNK_SIZE)
-            datetimenow = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-            filename_new = datetimenow + "_" + filename.decode()
-            with open(filename_new, 'w+') as file:
-                data = connection.recv(CHUNK_SIZE)
-                while data != '<END>'.encode():
-                    file.write(data.decode())
-                    data = connection.recv(CHUNK_SIZE)
 
-            with open(filename_new) as file:
+            with open(filename) as file:
                 data = file.read(CHUNK_SIZE)
                 while data:
                     connection.send(data.encode())
-                    print(data)
+                    # print(data)
                     data = file.read(CHUNK_SIZE)
                 sleep(1)
                 connection.send('<END>'.encode())
+        except FileNotFoundError as e:
+            print(e)
+            connection.send('<FILE_NOT_FOUND>'.encode())
         except Exception as e:
             print(e)
         finally:
