@@ -111,7 +111,7 @@ if __name__ == "__main__":
     cc = ChatClient()
     while True:
         try:
-            cmdline = input("Command {}:".format(cc.tokenid))
+            cmdline = input("\nCommand {}\n↳ ".format(cc.tokenid))
             print(cc.proses(cmdline))
         except KeyboardInterrupt:
             print()

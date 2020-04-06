@@ -1,9 +1,5 @@
-import sys
-import os
-import json
-import uuid
 import logging
-import copy
+import uuid
 from queue import Queue
 
 
@@ -42,9 +38,7 @@ class Chat:
                 return self.send_message(sessionid, usernamefrom, usernameto, message)
             elif (command == 'inbox'):
                 sessionid = j[1].strip()
-                username = self.sessions[sessionid]['username']
-                logging.warning("INBOX: {}".format(sessionid))
-                return self.get_inbox(username)
+                return self.get_inbox(sessionid)
             elif (command == 'online'):
                 sessionid = j[1].strip()
                 return self.list_online_users(sessionid)
@@ -82,10 +76,9 @@ class Chat:
         for session in self.sessions.items():
             if session[0] == sessionid:
                 continue
-            temp = copy.deepcopy(session[1])
-            del temp['userdetail']['password']
-            del temp['userdetail']['incoming']
-            del temp['userdetail']['outgoing']
+            user = session[1]
+            temp = {'username': user['username'],
+                    'userdetail': {'nama': user['userdetail']['nama'], 'negara': user['userdetail']['negara']}}
             users.append(temp)
         return {'status': 'OK', 'users': users}
 
@@ -113,7 +106,11 @@ class Chat:
             inqueue_receiver[username_from].put(message)
         return {'status': 'OK', 'message': 'Message Sent'}
 
-    def get_inbox(self, username):
+    def get_inbox(self, sessionid):
+        if (sessionid not in self.sessions):
+            return {'status': 'ERROR', 'message': 'Session Tidak Ditemukan'}
+        username = self.sessions[sessionid]['username']
+        logging.warning("INBOX: {}".format(sessionid))
         s_fr = self.get_user(username)
         incoming = s_fr['incoming']
         msgs = {}
