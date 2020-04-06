@@ -3,6 +3,7 @@ import os
 import json
 import uuid
 import logging
+import copy
 from queue import Queue
 
 
@@ -26,6 +27,9 @@ class Chat:
                 password = j[2].strip()
                 logging.warning("AUTH: auth {} {}".format(username, password))
                 return self.autentikasi_user(username, password)
+            elif (command == 'logout'):
+                sessionid = j[1].strip()
+                return self.logout_user(sessionid)
             elif (command == 'send'):
                 sessionid = j[1].strip()
                 usernameto = j[2].strip()
@@ -41,6 +45,9 @@ class Chat:
                 username = self.sessions[sessionid]['username']
                 logging.warning("INBOX: {}".format(sessionid))
                 return self.get_inbox(username)
+            elif (command == 'online'):
+                sessionid = j[1].strip()
+                return self.list_online_users(sessionid)
             else:
                 return {'status': 'ERROR', 'message': '**Protocol Tidak Benar'}
         except KeyError:
@@ -57,10 +64,30 @@ class Chat:
         self.sessions[tokenid] = {'username': username, 'userdetail': self.users[username]}
         return {'status': 'OK', 'tokenid': tokenid}
 
+    def logout_user(self, sessionid):
+        if (sessionid not in self.sessions):
+            return {'status': 'ERROR', 'message': 'Session Tidak Ditemukan'}
+        del self.sessions[sessionid]
+        return {'status': 'OK'}
+
     def get_user(self, username):
         if (username not in self.users):
             return False
         return self.users[username]
+
+    def list_online_users(self, sessionid):
+        if (sessionid not in self.sessions):
+            return {'status': 'ERROR', 'message': 'Session Tidak Ditemukan'}
+        users = []
+        for session in self.sessions.items():
+            if session[0] == sessionid:
+                continue
+            temp = copy.deepcopy(session[1])
+            del temp['userdetail']['password']
+            del temp['userdetail']['incoming']
+            del temp['userdetail']['outgoing']
+            users.append(temp)
+        return {'status': 'OK', 'users': users}
 
     def send_message(self, sessionid, username_from, username_dest, message):
         if (sessionid not in self.sessions):

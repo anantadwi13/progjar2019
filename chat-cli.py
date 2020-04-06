@@ -29,6 +29,10 @@ class ChatClient:
                 return self.sendmessage(usernameto, message)
             elif (command == 'inbox'):
                 return self.inbox()
+            elif (command == 'online'):
+                return self.list_online()
+            elif (command == 'logout'):
+                return self.logout()
             else:
                 return "*Maaf, command tidak benar"
         except IndexError:
@@ -40,12 +44,12 @@ class ChatClient:
             receivemsg = ""
             while True:
                 data = self.sock.recv(64)
-                print("diterima dari server", data)
+                # print("diterima dari server", data)
                 if (data):
                     receivemsg = "{}{}".format(receivemsg,
                                                data.decode())  # data harus didecode agar dapat di operasikan dalam bentuk string
                     if receivemsg[-4:] == '\r\n\r\n':
-                        print("end of string")
+                        # print("end of string")
                         return json.loads(receivemsg)
         except:
             self.sock.close()
@@ -57,6 +61,27 @@ class ChatClient:
         if result['status'] == 'OK':
             self.tokenid = result['tokenid']
             return "username {} logged in, token {} ".format(username, self.tokenid)
+        else:
+            return "Error, {}".format(result['message'])
+
+    def logout(self):
+        if (self.tokenid == ""):
+            return "Error, you are not logged in yet"
+        string = "logout {} \r\n".format(self.tokenid)
+        result = self.sendstring(string)
+        if result['status'] == 'OK':
+            self.tokenid = ""
+            return "Logged out"
+        else:
+            return "Error, {}".format(result['message'])
+
+    def list_online(self):
+        if (self.tokenid == ""):
+            return "Error, not authorized"
+        string = "online {} \r\n".format(self.tokenid)
+        result = self.sendstring(string)
+        if result['status'] == 'OK':
+            return "{}".format(json.dumps(result['users']))
         else:
             return "Error, {}".format(result['message'])
 
@@ -85,5 +110,13 @@ class ChatClient:
 if __name__ == "__main__":
     cc = ChatClient()
     while True:
-        cmdline = input("Command {}:".format(cc.tokenid))
-        print(cc.proses(cmdline))
+        try:
+            cmdline = input("Command {}:".format(cc.tokenid))
+            print(cc.proses(cmdline))
+        except KeyboardInterrupt:
+            print()
+            if cc.tokenid:
+                print('Logging out...')
+                cc.proses('logout')
+            print('Exiting program')
+            exit()
