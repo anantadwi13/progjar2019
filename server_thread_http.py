@@ -15,34 +15,32 @@ class ProcessTheClient(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
-        message = ""
+        request_str = ""
         while True:
             try:
                 data = self.connection.recv(32)
                 if data:
                     d = data.decode()
-                    message += d
-                    message_split = Request.load(message)
-                    if message_split.BODY is not None:
-                        headers = {n.split(": ", 1)[0]: n.split(": ", 1)[1] for n in
-                                   message_split.HEADER.split("\r\n")[1:] if n != ''}
-                        if 'Content-Length' in headers and int(headers['Content-Length']) > 0:
+                    request_str += d
+                    request = Request.load(request_str)
+                    if request.BODY is not None:
+                        if 'Content-Length' in request.HEADER_DICT and int(request.HEADER_DICT['Content-Length']) > 0:
                             while True:
-                                if len(message_split.BODY) >= int(headers['Content-Length']):
+                                if len(request.BODY) >= int(request.HEADER_DICT['Content-Length']):
                                     break
                                 data = self.connection.recv(32)
                                 if data:
                                     d = data.decode()
-                                    message += d
-                                    message_split = Request.load(message)
+                                    request_str += d
+                                    request = Request.load(request_str)
                                 else:
                                     break
-                        logging.warning("data dari client: \n{}\n\n".format(message_split))
-                        hasil = httpserver.proses(message)
+                        logging.warning("data dari client: \n{}\n\n".format(request))
+                        hasil = httpserver.proses(request)
                         hasil = hasil + "\r\n\r\n"
                         logging.warning("balas ke  client: {}".format(hasil))
                         self.connection.sendall(hasil.encode())
-                        message = ""
+                        request_str = ""
                         self.connection.close()
                         break
                 else:

@@ -2,6 +2,8 @@ import os.path
 from datetime import datetime
 from glob import glob
 
+from model import Request
+
 
 class HttpServer:
     def __init__(self):
@@ -29,32 +31,22 @@ class HttpServer:
             response_str = "{}{}".format(response_str, i)
         return response_str
 
-    def proses(self, data):
-
-        message = data.split("\r\n\r\n")
-
-        headers = message[0].split("\r\n")
-        content = message[1] if len(message) > 1 else ""
-
-        baris = headers[0]
-
-        all_headers = {n.split(": ", 1)[0]: n.split(": ", 1)[1] for n in headers[1:] if n != ''}
-
-        j = baris.split(" ")
+    def proses(self, request: Request):
+        j = request.REQUEST_LINE.split(" ")
         try:
             method = j[0].upper().strip()
             if method == 'GET':
                 object_address = j[1].strip()
-                return self.http_get(object_address, all_headers)
+                return self.http_get(object_address, request.HEADER_DICT)
             if method == 'POST':
                 object_address = j[1].strip()
-                return self.http_post(object_address, all_headers, content)
+                return self.http_post(object_address, request.HEADER_DICT, request.BODY)
             else:
                 return self.response(400, 'Bad Request', '', {})
         except IndexError:
             return self.response(400, 'Bad Request', '', {})
 
-    def http_get(self, object_address, headers):
+    def http_get(self, object_address, headers=None):
         files = glob('./*')
         thedir = '.'
         if thedir + object_address not in files:
@@ -70,7 +62,7 @@ class HttpServer:
 
         return self.response(200, 'OK', isi, headers)
 
-    def http_post(self, object_address, headers, content):
+    def http_post(self, object_address, headers=None, content=None):
         isi = ""
 
         isi += "===HEADER===\n"
@@ -90,7 +82,7 @@ class HttpServer:
 
 if __name__ == "__main__":
     httpserver = HttpServer()
-    d = httpserver.proses('GET testing.txt HTTP/1.0')
+    d = httpserver.proses(Request.load('GET testing.txt HTTP/1.0'))
     print(d)
     d = httpserver.http_get('testing2.txt')
     print(d)
