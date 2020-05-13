@@ -11,3 +11,5 @@ Ananta Dwi Prasetya Purna Yuda
 [Tugas 6](https://github.com/anantadwi13/progjar2020/tree/tugas6)  
 [Tugas 7](https://github.com/anantadwi13/progjar2020/tree/tugas7)  
 [Tugas 8](https://github.com/anantadwi13/progjar2020/tree/tugas8)  
+[Tugas 9](https://github.com/anantadwi13/progjar2020/tree/tugas9)  
+[Tugas 10](https://github.com/anantadwi13/progjar2020/tree/tugas10)  
